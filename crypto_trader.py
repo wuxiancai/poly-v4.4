@@ -86,7 +86,7 @@ class CryptoTrader:
         self.is_trading = False  # 添加交易状态标志
         self.refresh_interval = 600000  # 10分钟 = 600000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
-        self.default_target_price = 0.56
+        self.default_target_price = 0.54
         self._amounts_logged = False
         # 在初始化部分添加
         self.stop_event = threading.Event()
@@ -670,7 +670,7 @@ class CryptoTrader:
         self.buy_no_button.grid(row=0, column=2, padx=5, pady=5)
 
         self.buy_confirm_button = ttk.Button(buy_button_frame, text="Buy-买入", width=10,
-                                            command=self.click_buy_confirm)
+                                            command=lambda: self.click_website_button("Buy-Confirm"))
         self.buy_confirm_button.grid(row=0, column=3, padx=5, pady=5)
 
         # 第二行按钮
@@ -945,26 +945,7 @@ class CryptoTrader:
             
             try:
                 # 使用JavaScript直接获取价格
-                prices = self.driver.execute_script("""
-                    function getPrices() {
-                        const prices = {yes: null, no: null};
-                        const elements = document.getElementsByTagName('span');
-                        
-                        for (let el of elements) {
-                            const text = el.textContent.trim();
-                            if (text.includes('Yes') && text.includes('¢')) {
-                                const match = text.match(/(\\d+\\.?\\d*)¢/);
-                                if (match) prices.yes = parseFloat(match[1]);
-                            }
-                            if (text.includes('No') && text.includes('¢')) {
-                                const match = text.match(/(\\d+\\.?\\d*)¢/);
-                                if (match) prices.no = parseFloat(match[1]);
-                            }
-                        }
-                        return prices;
-                    }
-                    return getPrices();
-                """)
+                prices = self.get_prices()
                 
                 if prices['yes'] is not None and prices['no'] is not None:
                     yes_price = float(prices['yes']) / 100
@@ -1368,12 +1349,33 @@ class CryptoTrader:
         """结束交易时"""
         self.is_trading = False
         
-
-    """以下代码是监控买卖条件及执行交易的函数,程序开始进入交易阶段,从 1372 行直到第 2540 行"""
-    def First_trade(self):
+    def get_prices(self):
+        """使用XPath获取Yes和No价格"""
         try:
-            self.start_trading_operation()
-            # 获取当前Yes和No价格
+            # 等待价格元素加载
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, XPathConfig.YES_PRICE))
+            )
+            
+            # 获取Yes价格
+            yes_element = self.driver.find_element(By.XPATH, XPathConfig.YES_PRICE)
+            yes_text = yes_element.text
+            yes_price = float(re.search(r'(\d+\.?\d*)¢', yes_text).group(1))
+            
+            # 获取No价格 
+            no_element = self.driver.find_element(By.XPATH, XPathConfig.NO_PRICE)
+            no_text = no_element.text
+            no_price = float(re.search(r'(\d+\.?\d*)¢', no_text).group(1))
+            
+            return {'yes': yes_price, 'no': no_price}
+        except Exception as e:
+            self.logger.error(f"获取价格失败: {str(e)}")
+            self.get_prices()
+    
+    """以下代码是监控买卖条件及执行交易的函数,程序开始进入交易阶段,从 1394 行直到第 2560 行"""
+    def get_prices_from_driver(self):
+        """从浏览器获取Yes和No价格"""
+        try:
             prices = self.driver.execute_script("""
                 function getPrices() {
                     const prices = {yes: null, no: null};
@@ -1394,6 +1396,16 @@ class CryptoTrader:
                 }
                 return getPrices();
             """)
+            return prices
+        except Exception as e:
+            self.logger.error(f"获取价格失败: {str(e)}")
+            self.get_prices_from_driver()
+        
+    def First_trade(self):
+        try:
+            self.start_trading_operation()
+            # 获取当前Yes和No价格
+            prices = self.get_prices_from_driver()
                 
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1404,7 +1416,7 @@ class CryptoTrader:
                 no1_target = float(self.no1_price_entry.get())
                 
                 # 检查Yes1价格匹配
-                if 0 <= (yes_price - yes1_target ) <= 0.1 and yes1_target > 0:
+                if 0 <= (yes_price - yes1_target ) <= 0.05 and yes1_target > 0:
                     while True:
                         self.logger.info("Yes 1价格匹配,执行自动交易")
                         # 执行现有的交易操作
@@ -1453,7 +1465,7 @@ class CryptoTrader:
                             time.sleep(2)  # 添加延时避免过于频繁的重试
 
                 # 检查No1价格匹配
-                elif 0 <= (no_price - no1_target ) <= 0.1 and no1_target > 0:
+                elif 0 <= (no_price - no1_target ) <= 0.05 and no1_target > 0:
                     while True:
                         self.logger.info("No 1价格匹配,执行自动交易") 
                         # 执行现有的交易操作
@@ -1519,27 +1531,8 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             # 获取当前Yes和No价格
-            prices = self.driver.execute_script("""
-                function getPrices() {
-                    const prices = {yes: null, no: null};
-                    const elements = document.getElementsByTagName('span');
-                    
-                    for (let el of elements) {
-                        const text = el.textContent.trim();
-                        if (text.includes('Yes') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.yes = parseFloat(match[1]);
-                        }
-                        if (text.includes('No') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.no = parseFloat(match[1]);
-                        }
-                    }
-                    return prices;
-                }
-                return getPrices();
-            """)
-                
+            prices = self.get_prices_from_driver()
+
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
                 no_price = float(prices['no']) / 100
@@ -1549,7 +1542,7 @@ class CryptoTrader:
                 no2_target = float(self.no2_price_entry.get())
                 
                 # 检查Yes2价格匹配
-                if 0 <= (yes_price - yes2_target ) <= 0.1 and yes2_target > 0:
+                if 0 <= (yes_price - yes2_target ) <= 0.05 and yes2_target > 0:
                     while True:
                         self.logger.info("Yes 2价格匹配,执行自动交易")
                         # 执行现有的交易操作
@@ -1589,7 +1582,7 @@ class CryptoTrader:
                             self.logger.warning("交易失败,等待2秒后重试")
                             time.sleep(2)  # 添加延时避免过于频繁的重试
                 # 检查No2价格匹配
-                elif 0 <= (no_price - no2_target ) <= 0.1 and no2_target > 0:
+                elif 0 <= (no_price - no2_target ) <= 0.05 and no2_target > 0:
                     while True:
                         self.logger.info("No 2价格匹配,执行自动交易")
                         
@@ -1647,26 +1640,7 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")  
             # 获取当前Yes和No价格
-            prices = self.driver.execute_script("""
-                function getPrices() {
-                    const prices = {yes: null, no: null};
-                    const elements = document.getElementsByTagName('span');
-                    
-                    for (let el of elements) {
-                        const text = el.textContent.trim();
-                        if (text.includes('Yes') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.yes = parseFloat(match[1]);
-                        }
-                        if (text.includes('No') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.no = parseFloat(match[1]);
-                        }
-                    }
-                    return prices;
-                }
-                return getPrices();
-            """)
+            prices = self.get_prices_from_driver()
                 
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1677,7 +1651,7 @@ class CryptoTrader:
                 no3_target = float(self.no3_price_entry.get())
                 
                 # 检查Yes3价格匹配
-                if 0 <= (yes_price - yes3_target ) <= 0.1 and yes3_target > 0:
+                if 0 <= (yes_price - yes3_target ) <= 0.05 and yes3_target > 0:
                     while True:
                         self.logger.info("Yes 3价格匹配,执行自动交易")
                         # 执行交易操作
@@ -1717,7 +1691,7 @@ class CryptoTrader:
                             self.logger.warning("交易失败,等待2秒后重试")
                             time.sleep(2)  # 添加延时避免过于频繁的重试
                 # 检查No3价格匹配
-                elif 0 <= (no_price - no3_target ) <= 0.1 and no3_target > 0:
+                elif 0 <= (no_price - no3_target ) <= 0.05 and no3_target > 0:
                     while True:
                         self.logger.info("No 3价格匹配,执行自动交易")
                         # 执行交易操作
@@ -1774,26 +1748,7 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             # 获取当前Yes和No价格
-            prices = self.driver.execute_script("""
-                function getPrices() {
-                    const prices = {yes: null, no: null};
-                    const elements = document.getElementsByTagName('span');
-                    
-                    for (let el of elements) {
-                        const text = el.textContent.trim();
-                        if (text.includes('Yes') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.yes = parseFloat(match[1]);
-                        }
-                        if (text.includes('No') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.no = parseFloat(match[1]);
-                        }
-                    }
-                    return prices;
-                }
-                return getPrices();
-            """)
+            prices = self.get_prices_from_driver()
                 
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1804,7 +1759,7 @@ class CryptoTrader:
                 no4_target = float(self.no4_price_entry.get())
                 
                 # 检查Yes4价格匹配
-                if 0 <= (yes_price - yes4_target ) <= 0.1 and yes4_target > 0:
+                if 0 <= (yes_price - yes4_target ) <= 0.05 and yes4_target > 0:
                     while True:
                         self.logger.info("Yes 4价格匹配,执行自动交易")
                         # 执行交易操作
@@ -1848,7 +1803,7 @@ class CryptoTrader:
                             self.logger.warning("交易失败,等待2秒后重试")
                             time.sleep(2)  # 添加延时避免过于频繁的重试
                 # 检查No4价格匹配
-                elif 0 <= (no_price - no4_target ) <= 0.1 and no4_target > 0:
+                elif 0 <= (no_price - no4_target ) <= 0.05 and no4_target > 0:
                     while True:
                         self.logger.info("No 4价格匹配,执行自动交易")
                         # 执行交易操作
@@ -1908,22 +1863,7 @@ class CryptoTrader:
                 raise Exception("浏览器连接丢失")
                 
             # 获取当前Yes价格
-            prices = self.driver.execute_script("""
-                function getPrices() {
-                    const prices = {yes: null, no: null};
-                    const elements = document.getElementsByTagName('span');
-                    
-                    for (let el of elements) {
-                        const text = el.textContent.trim();
-                        if (text.includes('Yes') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.yes = parseFloat(match[1]);
-                        }
-                    }
-                    return prices;
-                }
-                return getPrices();
-            """)
+            prices = self.get_prices_from_driver()
                 
             if prices['yes'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1932,29 +1872,13 @@ class CryptoTrader:
                 yes5_target = float(self.yes5_price_entry.get())
                 
                 # 检查Yes4价格匹配
-                if 0 <= (yes_price - yes5_target) <= 0.1 and yes5_target > 0:
+                if 0 <= (yes_price - yes5_target) <= 0.05 and yes5_target > 0:
                     self.logger.info("Yes 4价格匹配,执行自动卖出")
                     while True:
                         # ... 执行卖出YES操作 ...
                         self.only_sell_yes()
                         self.logger.info("卖完 YES 后，再卖 NO")
-                        # 增加判断是否存在 POSITION_NO_LABEL,如果存在则继续，不存在则退出
-                        position_value = None
-                        try:
-                            # 尝试获取第一行YES的标签值，如果不存在会直接进入except块
-                            no_position_lable = WebDriverWait(self.driver, 1).until(  # 缩短等待时间到1秒
-                                EC.presence_of_element_located((By.XPATH, XPathConfig.POSITION_NO_LABEL))
-                            )
-                            position_value = no_position_lable.text
-                        except:
-                            # 如果获取NO_lable失败，不报错，继续执行
-                            pass   
-                        # 根据position_value来决定下面的操作
-                        if position_value == "No":
-                            self.only_sell_no()
-                        else:
-                            pass
-                        
+                        self.only_sell_no()
                         # 重置所有价格
                         for i in range(1,6):  # 1-5
                             yes_entry = getattr(self, f'yes{i}_price_entry', None)
@@ -1986,22 +1910,7 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")   
             # 获取当前No价格
-            prices = self.driver.execute_script("""
-                function getPrices() {
-                    const prices = {yes: null, no: null};
-                    const elements = document.getElementsByTagName('span');
-                    
-                    for (let el of elements) {
-                        const text = el.textContent.trim();
-                        if (text.includes('No') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.no = parseFloat(match[1]);
-                        }
-                    }
-                    return prices;
-                }
-                return getPrices();
-            """)
+            prices = self.get_prices_from_driver()
                 
             if prices['no'] is not None:
                 no_price = float(prices['no']) / 100
@@ -2010,28 +1919,13 @@ class CryptoTrader:
                 no5_target = float(self.no5_price_entry.get())
                 
                 # 检查No4价格匹配
-                if 0 <= (no_price - no5_target) <= 0.04 and no5_target > 0:
+                if 0 <= (no_price - no5_target) <= 0.05 and no5_target > 0:
                     self.logger.info("No 4价格匹配,执行自动卖出")
                     while True:
                         # 卖完 NO 后，自动再卖 YES                      
                         self.only_sell_no()
                         self.logger.info("卖完 NO 后，再卖 YES")
-                        # 增加判断是否存在 POSITION_YES_LABEL,如果存在则继续，不存在则退出
-                        position_value = None
-                        try:
-                            # 尝试获取第一行YES的标签值，如果不存在会直接进入except块
-                            yes_position_lable = WebDriverWait(self.driver, 1).until(  # 缩短等待时间到1秒
-                                EC.presence_of_element_located((By.XPATH, XPathConfig.POSITION_YES_LABEL))
-                            )
-                            position_value = yes_position_lable.text
-                        except:
-                            # 如果获取YES_lable失败，不报错，继续执行
-                            pass   
-                        # 根据position_value来决定下面的操作
-                        if position_value == "Yes":
-                            self.only_sell_yes()
-                        else:
-                            pass
+                        self.only_sell_yes()
                         # 重置所有价格
                         for i in range(1,6):  # 1-5
                             yes_entry = getattr(self, f'yes{i}_price_entry', None)
@@ -2058,19 +1952,6 @@ class CryptoTrader:
     """以上代码是交易主体函数 1-4,从第 1370 行到第 2027行"""
 
     """以下代码是交易过程中的各种方法函数，涉及到按钮的点击，从第 2029 行到第 2295 行"""
-    def click_buy_confirm(self):
-        """点击网页上的买入确认按钮"""
-        try:
-            # 等待按钮可点击
-            confirm_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_CONFIRM_BUTTON))
-            )
-            # 点击按钮
-            confirm_button.click()
-            self.logger.info("已点击买入确认按钮")
-        except Exception as e:
-            self.logger.error(f"点击买入确认按钮失败: {str(e)}")
-
     def click_website_button(self, button_type):
         try:
             if not self.driver:
@@ -2083,11 +1964,11 @@ class CryptoTrader:
             
             # 根据按钮类型查找并点击对应的网站按钮
             if button_type == "Buy":
-                xpath = XPathConfig.BUY_BUTTON
+                xpath = XPathConfig.WEBSITE_BUY
             elif button_type == "Sell":
-                xpath = XPathConfig.SELL_BUTTON
+                xpath = XPathConfig.WEBSITE_SELL
             elif button_type == "Buy-Confirm":
-                xpath = XPathConfig.BUY_CONFIRM_BUTTON
+                xpath = XPathConfig.WEBSITE_BUY_CONFIRM
             elif button_type == "SetExpBuy":
                 # 先点击 Set Expiration
                 exp_button = WebDriverWait(self.driver, 10).until(
@@ -2201,10 +2082,11 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             # 点击Sell-卖出按钮
-            sell_button = WebDriverWait(self.driver, 10).until(
+            button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_PROFIT_BUTTON))
             )
-            sell_button.click()
+            self.driver.execute_script("arguments[0].click();", button)
+            self.update_status("已点击卖出盈利按钮")
             # 等待MetaMask弹窗出现
             time.sleep(1)
             # 使用统一的MetaMask弹窗处理方法
@@ -2510,20 +2392,7 @@ class CryptoTrader:
     def only_sell_yes(self):
         """只卖出YES"""
         # 获取当前价格
-        prices = self.driver.execute_script("""
-            function getPrices() {
-                const prices = {yes: null};
-                const elements = document.getElementsByTagName('span');
-                for (let el of elements) {
-                    if (el.textContent.includes('Yes') && el.textContent.includes('¢')) {
-                        const match = el.textContent.match(/(\\d+\\.?\\d*)¢/);
-                        if (match) prices.yes = parseFloat(match[1]);
-                    }
-                }
-                return prices;
-            }
-            return getPrices();
-        """)
+        prices = self.get_prices()
         yes_price = float(prices['yes']) / 100 if prices['yes'] else 0
 
         self.position_sell_yes_button.invoke()
@@ -2550,20 +2419,7 @@ class CryptoTrader:
     def only_sell_no(self):
         """只卖出NO"""
         # 获取当前价格
-        prices = self.driver.execute_script("""
-            function getPrices() {
-                const prices = {no: null};
-                const elements = document.getElementsByTagName('span');
-                for (let el of elements) {
-                    if (el.textContent.includes('No') && el.textContent.includes('¢')) {
-                        const match = el.textContent.match(/(\\d+\\.?\\d*)¢/);
-                        if (match) prices.no = parseFloat(match[1]);
-                    }
-                }
-                return prices;
-            }
-            return getPrices();
-        """)
+        prices = self.get_prices()
         no_price = float(prices['no']) / 100 if prices['no'] else 0
 
         self.position_sell_no_button.invoke()
