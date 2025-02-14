@@ -444,14 +444,14 @@ class CryptoTrader:
         self.update_amount_button['state'] = 'disabled'  # 初始禁用
 
         # 添加价格按钮
-        prices = ['0.55', '0.56']
+        prices = ['0.54', '0.55']
         for price in prices:
             btn = ttk.Button(
                 button_frame, 
                 text=price,
                 width=4,
                 command=lambda p=price: self.set_default_price(p),
-                style='Red.TButton' if price == '0.56' else 'Black.TButton'
+                style='Red.TButton' if price == '0.54' else 'Black.TButton'
             )
             btn.pack(side=tk.LEFT, padx=2)
         
@@ -945,7 +945,26 @@ class CryptoTrader:
             
             try:
                 # 使用JavaScript直接获取价格
-                prices = self.get_prices()
+                prices = self.driver.execute_script("""
+                    function getPrices() {
+                        const prices = {yes: null, no: null};
+                        const elements = document.getElementsByTagName('span');
+                        
+                        for (let el of elements) {
+                            const text = el.textContent.trim();
+                            if (text.includes('Yes') && text.includes('¢')) {
+                                const match = text.match(/(\\d+\\.?\\d*)¢/);
+                                if (match) prices.yes = parseFloat(match[1]);
+                            }
+                            if (text.includes('No') && text.includes('¢')) {
+                                const match = text.match(/(\\d+\\.?\\d*)¢/);
+                                if (match) prices.no = parseFloat(match[1]);
+                            }
+                        }
+                        return prices;
+                    }
+                    return getPrices();
+                """)
                 
                 if prices['yes'] is not None and prices['no'] is not None:
                     yes_price = float(prices['yes']) / 100
@@ -1349,7 +1368,7 @@ class CryptoTrader:
         """结束交易时"""
         self.is_trading = False
         
-    def get_prices(self):
+    def get_prices_from_driver(self):
         """使用XPath获取Yes和No价格"""
         try:
             # 等待价格元素加载
@@ -1373,7 +1392,7 @@ class CryptoTrader:
             self.get_prices()
     
     """以下代码是监控买卖条件及执行交易的函数,程序开始进入交易阶段,从 1394 行直到第 2560 行"""
-    def get_prices_from_driver(self):
+    def get_prices(self):
         """从浏览器获取Yes和No价格"""
         try:
             prices = self.driver.execute_script("""
@@ -1405,7 +1424,26 @@ class CryptoTrader:
         try:
             self.start_trading_operation()
             # 获取当前Yes和No价格
-            prices = self.get_prices_from_driver()
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
                 
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1531,7 +1569,26 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             # 获取当前Yes和No价格
-            prices = self.get_prices_from_driver()
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
 
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1640,7 +1697,26 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")  
             # 获取当前Yes和No价格
-            prices = self.get_prices_from_driver()
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
                 
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1748,7 +1824,26 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             # 获取当前Yes和No价格
-            prices = self.get_prices_from_driver()
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
                 
             if prices['yes'] is not None and prices['no'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1863,7 +1958,26 @@ class CryptoTrader:
                 raise Exception("浏览器连接丢失")
                 
             # 获取当前Yes价格
-            prices = self.get_prices_from_driver()
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
                 
             if prices['yes'] is not None:
                 yes_price = float(prices['yes']) / 100
@@ -1910,7 +2024,26 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")   
             # 获取当前No价格
-            prices = self.get_prices_from_driver()
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
                 
             if prices['no'] is not None:
                 no_price = float(prices['no']) / 100
@@ -2392,7 +2525,26 @@ class CryptoTrader:
     def only_sell_yes(self):
         """只卖出YES"""
         # 获取当前价格
-        prices = self.get_prices()
+        prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
         yes_price = float(prices['yes']) / 100 if prices['yes'] else 0
 
         self.position_sell_yes_button.invoke()
@@ -2419,7 +2571,26 @@ class CryptoTrader:
     def only_sell_no(self):
         """只卖出NO"""
         # 获取当前价格
-        prices = self.get_prices()
+        prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
         no_price = float(prices['no']) / 100 if prices['no'] else 0
 
         self.position_sell_no_button.invoke()
