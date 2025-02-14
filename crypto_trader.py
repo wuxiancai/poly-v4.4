@@ -1353,7 +1353,8 @@ class CryptoTrader:
                 self.refresh_timer = self.root.after(self.refresh_interval, self.schedule_refresh)
             except Exception as e:
                 self.logger.error(f"页面刷新失败: {str(e)}")
-        self.refresh_timer = self.root.after(600000, self.schedule_refresh)
+                # 即使刷新失败也安排下一次刷新
+                self.refresh_timer = self.root.after(self.refresh_interval, self.schedule_refresh)
 
     def start_trading_operation(self):
         """启动交易时"""
@@ -1367,6 +1368,8 @@ class CryptoTrader:
     def end_trading_operation(self):
         """结束交易时"""
         self.is_trading = False
+        # 交易结束后重新启动定时刷新
+        self.schedule_refresh()
         
     def get_prices_from_driver(self):
         """使用XPath获取Yes和No价格"""
