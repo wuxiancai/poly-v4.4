@@ -1274,6 +1274,8 @@ class CryptoTrader:
             time.sleep(0.3)
             # 直接执行click_accept_button
             self.logger.info("登录完成,执行click_accept_button")
+            time.sleep(1)
+            self.driver.refresh()
             self.click_accept_button()
             return True
         except Exception as e:
@@ -1284,10 +1286,9 @@ class CryptoTrader:
         """重新登录后,需要在amount输入框输入1并确认"""
         self.logger.info("开始执行click_accept_button")
         try:
-            # 等待输入框可见
+            # 等待输入框可交互
             amount_input = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, XPathConfig.AMOUNT_INPUT))
-            )
+            EC.element_to_be_clickable((By.XPATH, XPathConfig.AMOUNT_INPUT)))
             
             # 清除现有输入并输入新值
             amount_input.clear()
