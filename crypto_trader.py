@@ -670,7 +670,7 @@ class CryptoTrader:
         self.buy_no_button.grid(row=0, column=2, padx=5, pady=5)
 
         self.buy_confirm_button = ttk.Button(buy_button_frame, text="Buy-买入", width=10,
-                                            command=lambda: self.click_website_button("Buy-Confirm"))
+                                            command=self.click_buy_confirm_button)
         self.buy_confirm_button.grid(row=0, column=3, padx=5, pady=5)
 
         # 第二行按钮
@@ -1967,6 +1967,12 @@ class CryptoTrader:
     """以上代码是交易主体函数 1-4,从第 1370 行到第 2027行"""
 
     """以下代码是交易过程中的各种方法函数，涉及到按钮的点击，从第 2029 行到第 2295 行"""
+    def click_buy_confirm_button(self):
+        buy_confirm_button = WebDriverWait(self.driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_CONFIRM_BUTTON))
+                )
+        buy_confirm_button.click()
+    
     def click_website_button(self, button_type):
         try:
             if not self.driver:
@@ -1979,11 +1985,11 @@ class CryptoTrader:
             
             # 根据按钮类型查找并点击对应的网站按钮
             if button_type == "Buy":
-                xpath = XPathConfig.WEBSITE_BUY
+                xpath = XPathConfig.BUY_BUTTON
             elif button_type == "Sell":
-                xpath = XPathConfig.WEBSITE_SELL
+                xpath = XPathConfig.SELL_BUTTON
             elif button_type == "Buy-Confirm":
-                xpath = XPathConfig.WEBSITE_BUY_CONFIRM
+                xpath = XPathConfig.BUY_CONFIRM_BUTTON
             elif button_type == "SetExpBuy":
                 # 先点击 Set Expiration
                 exp_button = WebDriverWait(self.driver, 10).until(
@@ -1991,7 +1997,6 @@ class CryptoTrader:
                 )
                 exp_button.click()
                 time.sleep(1)  # 等待弹窗出现
-                
                 xpath = XPathConfig.WEBSITE_MODAL_BUY
             else:
                 self.update_status(f"未知的按钮类型: {button_type}")

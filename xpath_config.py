@@ -9,11 +9,11 @@ class XPathConfig:
     LOGIN_BUTTON = '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button'
     METAMASK_BUTTON = '//*[@id="authentication-modal"]/div/div[2]/div/div/div/div/div[3]/button[1]'
     # 交易按钮
-    SELL_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[1]/div/div/div[2]' #可能需要改动
-    BUY_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[1]/div/div/div[1]' #可能需要改动
+    SELL_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[1]/div/div/button[2]' #可能需要改动
+    BUY_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[1]/div/div/button[1]' #可能需要改动
 
-    BUY_YES_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[1]/div' #可能需要改动
-    BUY_NO_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[2]/div' #可能需要改动
+    BUY_YES_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[2]/div[1]/span[1]/button' #可能需要改动
+    BUY_NO_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[2]/div[1]/span[2]/button' #可能需要改动
 
     SELL_YES_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div[1]/div[1]/div' #可能需要改动
     SELL_NO_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div[1]/div[2]/div' #可能需要改动
@@ -22,7 +22,7 @@ class XPathConfig:
     SELL_PROFIT_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[3]/div[2]/div/span/button' #可能需要改动，买卖按钮是一样的
     
     # 金额输入
-    AMOUNT_INPUT = '//div[@class="c-dhzjXW c-dhzjXW-idAwKFA-css"]//input' #长期有效，可能需要改动
+    AMOUNT_INPUT = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[3]/div/div/div/div/div[1]/div/div[1]/div[2]/div/div/input' #长期有效，可能需要改动
     
     # Position相关
     POSITION_YES_LABEL  = '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]' #长期有效
