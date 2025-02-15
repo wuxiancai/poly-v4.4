@@ -793,8 +793,6 @@ class CryptoTrader:
         self.start_url_monitoring()
         # 启动登录状态监控
         self.start_login_monitoring()
-        # 启动页面刷新定时器
-        self.schedule_refresh()
 
     """以下代码是:threading.Thread(target=self._start_browser_monitoring, 
     args=(self.target_url,), daemon=True).start()线程启动后执行的函数,直到 995 行"""
@@ -1313,119 +1311,10 @@ class CryptoTrader:
             self.click_accept_button()
 
     """以上代码执行了登录操作的函数,直到第 1315 行,程序执行返回到 748 行"""
-
-    """以下代码是安排定时刷新页面的函数,直到第 1370 行"""
-    def schedule_refresh(self):
-        """定时刷新页面"""
-        if not self.running:
-            return
-        
-         # 取消现有定时器避免重复
-        if self.refresh_timer:
-            self.root.after_cancel(self.refresh_timer)
-            self.refresh_timer = None
-
-        if not self.is_trading:
-            try:
-                if self.driver:
-                    # 获取用户指定的监控URL
-                    target_url = self.url_entry.get()
-                    
-                    # 刷新页面
-                    self.driver.refresh()
-                    
-                    # 等待页面加载完成
-                    WebDriverWait(self.driver, 30).until(
-                        lambda driver: driver.execute_script('return document.readyState') == 'complete'
-                    )
-                    
-                    # 检查URL是否正确
-                    if self.driver.current_url != target_url:
-                        self.logger.warning("刷新后URL发生变化,正在恢复...")
-                        self.driver.get(target_url)
-                        
-                        # 等待页面加载完成
-                        WebDriverWait(self.driver, 30).until(
-                            lambda driver: driver.execute_script('return document.readyState') == 'complete'
-                        )
-                    self.logger.info("定时刷新页面完成")
-                # 安排下一次刷新
-                self.refresh_timer = self.root.after(self.refresh_interval, self.schedule_refresh)
-            except Exception as e:
-                self.logger.error(f"页面刷新失败: {str(e)}")
-                # 即使刷新失败也安排下一次刷新
-                self.refresh_timer = self.root.after(self.refresh_interval, self.schedule_refresh)
-
-    def start_trading_operation(self):
-        """启动交易时"""
-        self.is_trading = True
-        
-        # 仅取消当前待处理的刷新
-        if self.refresh_timer:
-            self.root.after_cancel(self.refresh_timer)
-            self.refresh_timer = None
-
-    def end_trading_operation(self):
-        """结束交易时"""
-        self.is_trading = False
-        # 交易结束后重新启动定时刷新
-        self.schedule_refresh()
-        
-    def get_prices_from_driver(self):
-        """使用XPath获取Yes和No价格"""
-        try:
-            # 等待价格元素加载
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, XPathConfig.YES_PRICE))
-            )
-            
-            # 获取Yes价格
-            yes_element = self.driver.find_element(By.XPATH, XPathConfig.YES_PRICE)
-            yes_text = yes_element.text
-            yes_price = float(re.search(r'(\d+\.?\d*)¢', yes_text).group(1))
-            
-            # 获取No价格 
-            no_element = self.driver.find_element(By.XPATH, XPathConfig.NO_PRICE)
-            no_text = no_element.text
-            no_price = float(re.search(r'(\d+\.?\d*)¢', no_text).group(1))
-            
-            return {'yes': yes_price, 'no': no_price}
-        except Exception as e:
-            self.logger.error(f"获取价格失败: {str(e)}")
-            self.get_prices()
-    
-    """以下代码是监控买卖条件及执行交易的函数,程序开始进入交易阶段,从 1394 行直到第 2560 行"""
-    def get_prices(self):
-        """从浏览器获取Yes和No价格"""
-        try:
-            prices = self.driver.execute_script("""
-                function getPrices() {
-                    const prices = {yes: null, no: null};
-                    const elements = document.getElementsByTagName('span');
-                    
-                    for (let el of elements) {
-                        const text = el.textContent.trim();
-                        if (text.includes('Yes') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.yes = parseFloat(match[1]);
-                        }
-                        if (text.includes('No') && text.includes('¢')) {
-                            const match = text.match(/(\\d+\\.?\\d*)¢/);
-                            if (match) prices.no = parseFloat(match[1]);
-                        }
-                    }
-                    return prices;
-                }
-                return getPrices();
-            """)
-            return prices
-        except Exception as e:
-            self.logger.error(f"获取价格失败: {str(e)}")
-            self.get_prices_from_driver()
-        
+   
+    """以下代码是监控买卖条件及执行交易的函数,程序开始进入交易阶段,从 1321 行直到第 2500 行"""  
     def First_trade(self):
         try:
-            self.start_trading_operation()
             # 获取当前Yes和No价格
             prices = self.driver.execute_script("""
                 function getPrices() {
@@ -1561,14 +1450,11 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"First_trade执行失败: {str(e)}")
             self.update_status(f"First_trade执行失败: {str(e)}")
-        finally:
-            self.end_trading_operation()
 
     def Second_trade(self):
         """处理Yes2/No2的自动交易"""
         try:
-            self.start_trading_operation()
-            self.is_trading = True
+            
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             # 获取当前Yes和No价格
@@ -1689,14 +1575,12 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Second_trade执行失败: {str(e)}")
             self.update_status(f"Second_trade执行失败: {str(e)}")
-        finally:
-            self.end_trading_operation()
-
+        
     def Third_trade(self):
         """处理Yes3/No3的自动交易"""
         try:
-            self.start_trading_operation()
-            self.is_trading = True
+            
+       
             if not self.driver:
                 raise Exception("浏览器连接丢失")  
             # 获取当前Yes和No价格
@@ -1816,14 +1700,12 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Third_trade执行失败: {str(e)}")
             self.update_status(f"Third_trade执行失败: {str(e)}")
-        finally:
-            self.end_trading_operation()
-
+        
     def Forth_trade(self):
         """处理Yes4/No4的自动交易"""
         try:
-            self.start_trading_operation()  
-            self.is_trading = True
+           
+            
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             # 获取当前Yes和No价格
@@ -1950,13 +1832,12 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Forth_trade执行失败: {str(e)}")
             self.update_status(f"Forth_trade执行失败: {str(e)}")
-        finally:
-            self.end_trading_operation()
+        
 
     def Sell_yes(self):
         """当YES4价格等于实时Yes价格时自动卖出"""
         try:
-            self.is_trading = True
+           
             if not self.driver:
                 raise Exception("浏览器连接丢失")
                 
@@ -2017,13 +1898,12 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Sell_yes执行失败: {str(e)}")
             self.update_status(f"Sell_yes执行失败: {str(e)}")
-        finally:
-            self.end_trading_operation()
+        
 
     def Sell_no(self):
         """当NO4价格等于实时No价格时自动卖出"""
         try:
-            self.is_trading = True
+            
             if not self.driver:
                 raise Exception("浏览器连接丢失")   
             # 获取当前No价格
@@ -2083,8 +1963,7 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Sell_no执行失败: {str(e)}")
             self.update_status(f"Sell_no执行失败: {str(e)}")
-        finally:
-            self.end_trading_operation()
+        
     """以上代码是交易主体函数 1-4,从第 1370 行到第 2027行"""
 
     """以下代码是交易过程中的各种方法函数，涉及到按钮的点击，从第 2029 行到第 2295 行"""
