@@ -2106,7 +2106,7 @@ class CryptoTrader:
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_PROFIT_BUTTON))
             )
-            self.driver.execute_script("arguments[0].click();", button)
+            button.click()
             self.update_status("已点击卖出盈利按钮")
             # 等待MetaMask弹窗出现
             time.sleep(1)
@@ -2130,7 +2130,7 @@ class CryptoTrader:
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_BUTTON))
             )
-            self.driver.execute_script("arguments[0].click();", button)
+            button.click()
             self.update_status("已点击 Buy 按钮")
         except Exception as e:
             self.logger.error(f"点击 Buy 按钮失败: {str(e)}")
@@ -2145,7 +2145,7 @@ class CryptoTrader:
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_BUTTON))
             )
-            self.driver.execute_script("arguments[0].click();", button)
+            button.click()
             self.update_status("已点击 Sell 按钮")
         except Exception as e:
             self.logger.error(f"点击 Sell 按钮失败: {str(e)}")
@@ -2161,7 +2161,7 @@ class CryptoTrader:
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_YES_BUTTON))
             )
-            self.driver.execute_script("arguments[0].click();", button)
+            button.click()
             self.update_status("已点击 Buy-Yes 按钮")
         except Exception as e:
             self.logger.error(f"点击 Buy-Yes 按钮失败: {str(e)}")
@@ -2176,7 +2176,7 @@ class CryptoTrader:
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_NO_BUTTON))
             )
-            self.driver.execute_script("arguments[0].click();", button)
+            button.click()
             self.update_status("已点击 Buy-No 按钮")
         except Exception as e:
             self.logger.error(f"点击 Buy-No 按钮失败: {str(e)}")
@@ -2192,7 +2192,7 @@ class CryptoTrader:
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_YES_BUTTON))
             )
-            self.driver.execute_script("arguments[0].click();", button)
+            button.click()
             self.update_status("已点击 Sell-Yes 按钮")
         except Exception as e:
             self.logger.error(f"点击 Sell-Yes 按钮失败: {str(e)}")
@@ -2207,7 +2207,7 @@ class CryptoTrader:
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_NO_BUTTON))
             )
-            self.driver.execute_script("arguments[0].click();", button)
+            button.click()
             self.update_status("已点击 Sell-No 按钮")
         except Exception as e:
             self.logger.error(f"点击 Sell-No 按钮失败: {str(e)}")

@@ -15,8 +15,8 @@ class XPathConfig:
     BUY_YES_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[2]/div[1]/span[1]/button' #可能需要改动
     BUY_NO_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[2]/div[1]/span[2]/button' #可能需要改动
 
-    SELL_YES_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div[1]/div[1]/div' #可能需要改动
-    SELL_NO_BUTTON = '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div[1]/div[2]/div' #可能需要改动
+    SELL_YES_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[2]/div[1]/span[1]/button' #可能需要改动
+    SELL_NO_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[2]/div[1]/span[2]/button' #可能需要改动
 
     BUY_CONFIRM_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[3]/div[2]/div/span/button'
     SELL_PROFIT_BUTTON = '/html/body/div[1]/div[2]/div/div/div/div/div/div[1]/div[3]/div[2]/div/span/button' #可能需要改动，买卖按钮是一样的
