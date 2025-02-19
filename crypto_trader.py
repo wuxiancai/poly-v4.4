@@ -1256,16 +1256,14 @@ class CryptoTrader:
             # 1. 按5次TAB
             for _ in range(5):
                 pyautogui.press('tab')
-                time.sleep(0.3)  # 每次按键之间添加短暂延迟
-            
             # 2. 按1次ENTER
+            time.sleep(0.3)
             pyautogui.press('enter')
-            time.sleep(3)  # 等待2秒
+            time.sleep(2)  # 等待2秒
             
             # 3. 按7次TAB
             for _ in range(7):
                 pyautogui.press('tab')
-                time.sleep(0.3)
             
             # 4. 按1次ENTER
             pyautogui.press('enter')

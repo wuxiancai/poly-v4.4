@@ -47,8 +47,8 @@ class XPathConfig:
     WEBSITE_MODAL_BUY = "//div[contains(@class, 'modal')]//button[contains(text(), 'Buy')]"
 
     # 卖出相关
-    SELL_POSITION_BUTTON = "//div[contains(text(), '{}')]/..//button[contains(text(), '卖出')]"
-    CONFIRM_SELL_BUTTON = "//button[contains(text(), '确认卖出')]"
+    SELL_POSITION_BUTTON = "//div[contains(text(), '{}')]/..//button[contains(text(), 'Sell')]"
+    CONFIRM_SELL_BUTTON = "//button[contains(text(), 'Sell')]"
 
     # 价格监控相关
     PRICE_BUTTON = "//button[contains(@class, '{}')]"  # 将通过format填充yes/no
