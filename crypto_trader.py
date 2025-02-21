@@ -223,11 +223,12 @@ class CryptoTrader:
                 if 'url_history' not in self.config:
                     self.config['url_history'] = []
                 
-                # 更新URL历史记录
-                if current_url in self.config['url_history']:
-                    self.config['url_history'].remove(current_url)
+                # 清空历史记录
+                self.config['url_history'].clear()
+                # 只保留当前URL
                 self.config['url_history'].insert(0, current_url)
-                self.config['url_history'] = self.config['url_history'][:6]  # 保留最近6条
+                # 确保最多保留1条
+                self.config['url_history'] = self.config['url_history'][:1]
                 self.url_entry['values'] = self.config['url_history']
             
             # 保存配置到文件，使用indent=4确保格式化
