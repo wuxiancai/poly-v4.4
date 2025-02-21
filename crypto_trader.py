@@ -1313,29 +1313,23 @@ class CryptoTrader:
 
     # 添加刷新方法
     def refresh_page(self):
-       """定时刷新页面"""
-       try:
-           if self.running and not self.trading:
-               self.logger.info("执行定时刷新")
-               self.driver.refresh()
-           else:
-               reason = []
-               if not self.running:
-                   reason.append("程序未运行")
-               if self.trading:
-                   reason.append("交易进行中")
-               self.logger.info(f"跳过刷新，原因: {', '.join(reason) if reason else '未知'}")
-           
-           if self.running:
-               self.logger.info("安排下一次刷新在10分钟后")
-               self.refresh_timer = self.root.after(60000, self.refresh_page)
-           else:
-               self.logger.info("程序未运行，停止安排刷新")
-       except Exception as e:
-           self.logger.error(f"页面刷新失败: {str(e)}")
-           if self.running:
-               self.refresh_timer = self.root.after(600000, self.refresh_page)
-
+        """定时刷新页面"""
+        try:
+            if self.running:
+                if not self.trading:  # 仅在非交易状态执行刷新
+                    self.logger.info("执行定时刷新")
+                    self.driver.refresh()
+                else:
+                    self.logger.info("交易进行中，跳过本次刷新")
+                
+                # 无论是否执行刷新都安排下一次（确保循环持续）
+                self.refresh_timer = self.root.after(self.refresh_interval, self.refresh_page)
+            else:
+                self.logger.info("程序未运行，停止安排刷新")
+        except Exception as e:
+            self.logger.error(f"页面刷新失败: {str(e)}")
+            if self.running:
+                self.refresh_timer = self.root.after(self.refresh_interval, self.refresh_page)
     """以上代码执行了登录操作的函数,直到第 1315 行,程序执行返回到 748 行"""
    
     """以下代码是监控买卖条件及执行交易的函数,程序开始进入交易阶段,从 1321 行直到第 2500 行"""  
