@@ -334,7 +334,7 @@ class CryptoTrader:
         ttk.Label(initial_frame, text="初始金额(%):").pack(side=tk.LEFT)
         self.initial_amount_entry = ttk.Entry(initial_frame, width=4)
         self.initial_amount_entry.pack(side=tk.LEFT)
-        self.initial_amount_entry.insert(0, "8")
+        self.initial_amount_entry.insert(0, "6")
         
         # 反水一次设置
         first_frame = ttk.Frame(amount_frame)
@@ -342,7 +342,7 @@ class CryptoTrader:
         ttk.Label(first_frame, text="反水一(%):").pack(side=tk.LEFT)
         self.first_rebound_entry = ttk.Entry(first_frame, width=4)
         self.first_rebound_entry.pack(side=tk.LEFT)
-        self.first_rebound_entry.insert(0, "255")
+        self.first_rebound_entry.insert(0, "300")
         
         # 反水N次设置
         n_frame = ttk.Frame(amount_frame)
@@ -350,7 +350,7 @@ class CryptoTrader:
         ttk.Label(n_frame, text="反水N(%):").pack(side=tk.LEFT)
         self.n_rebound_entry = ttk.Entry(n_frame, width=4)
         self.n_rebound_entry.pack(side=tk.LEFT)
-        self.n_rebound_entry.insert(0, "140")
+        self.n_rebound_entry.insert(0, "160")
 
         # 利润率设置
         profit_frame = ttk.Frame(amount_frame)
@@ -358,14 +358,14 @@ class CryptoTrader:
         ttk.Label(profit_frame, text="利率(%):").pack(side=tk.LEFT)
         self.profit_rate_entry = ttk.Entry(profit_frame, width=4)
         self.profit_rate_entry.pack(side=tk.LEFT)
-        self.profit_rate_entry.insert(0, "4")
+        self.profit_rate_entry.insert(0, "6")
 
         # 翻倍周数
         weeks_frame = ttk.Frame(amount_frame)
         weeks_frame.pack(side=tk.LEFT, padx=2)
         self.doubling_weeks_entry = ttk.Entry(weeks_frame, width=2, style='Red.TEntry')
         self.doubling_weeks_entry.pack(side=tk.LEFT)
-        self.doubling_weeks_entry.insert(0, "17")
+        self.doubling_weeks_entry.insert(0, "15")
         ttk.Label(weeks_frame, text="周翻倍", style='Red.TLabel').pack(side=tk.LEFT)
 
         # 交易次数按钮放在trades_frame中
@@ -1892,12 +1892,12 @@ class CryptoTrader:
             if prices['yes'] is not None:
                 yes_price = float(prices['yes']) / 100
                 
-                # 获取Yes4价格
+                # 获取Yes5价格
                 yes5_target = float(self.yes5_price_entry.get())
                 
-                # 检查Yes4价格匹配
+                # 检查Yes5价格匹配
                 if 0 <= (yes_price - yes5_target) <= 0.05 and yes5_target > 0:
-                    self.logger.info("Yes 4价格匹配,执行自动卖出")
+                    self.logger.info("Yes 5价格匹配,执行自动卖出")
                     while True:
                         # ... 执行卖出YES操作 ...
                         self.only_sell_yes()
@@ -1957,12 +1957,12 @@ class CryptoTrader:
             if prices['no'] is not None:
                 no_price = float(prices['no']) / 100
                 
-                # 获取No4价格
+                # 获取No5价格
                 no5_target = float(self.no5_price_entry.get())
                 
-                # 检查No4价格匹配
+                # 检查No5价格匹配
                 if 0 <= (no_price - no5_target) <= 0.05 and no5_target > 0:
-                    self.logger.info("No 4价格匹配,执行自动卖出")
+                    self.logger.info("No 5价格匹配,执行自动卖出")
                     while True:
                         # 卖完 NO 后，自动再卖 YES                      
                         self.only_sell_no()
