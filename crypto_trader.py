@@ -78,12 +78,12 @@ class CryptoTrader:
         self.logger = Logger('crypto_trader')
         self.driver = None
         self.running = False
+        self.trading = False
         self.retry_count = 3
         self.retry_interval = 5
         # 添加交易次数计数器
         self.trade_count = 0
         self.sell_count = 0  # 添加卖出计数器
-        self.is_trading = False  # 添加交易状态标志
         self.refresh_interval = 600000  # 10分钟 = 600000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
         self.default_target_price = 0.54
@@ -793,6 +793,8 @@ class CryptoTrader:
         self.start_url_monitoring()
         # 启动登录状态监控
         self.start_login_monitoring()
+        # 启动定时刷新
+        self.refresh_page()
 
     """以下代码是:threading.Thread(target=self._start_browser_monitoring, 
     args=(self.target_url,), daemon=True).start()线程启动后执行的函数,直到 995 行"""
@@ -1309,11 +1311,37 @@ class CryptoTrader:
             self.logger.error(f"click_accept_button执行失败: {str(e)}")
             self.click_accept_button()
 
+    # 添加刷新方法
+    def refresh_page(self):
+       """定时刷新页面"""
+       try:
+           if self.running and not self.trading:
+               self.logger.info("执行定时刷新")
+               self.driver.refresh()
+           else:
+               reason = []
+               if not self.running:
+                   reason.append("程序未运行")
+               if self.trading:
+                   reason.append("交易进行中")
+               self.logger.info(f"跳过刷新，原因: {', '.join(reason) if reason else '未知'}")
+           
+           if self.running:
+               self.logger.info("安排下一次刷新在10分钟后")
+               self.refresh_timer = self.root.after(60000, self.refresh_page)
+           else:
+               self.logger.info("程序未运行，停止安排刷新")
+       except Exception as e:
+           self.logger.error(f"页面刷新失败: {str(e)}")
+           if self.running:
+               self.refresh_timer = self.root.after(600000, self.refresh_page)
+
     """以上代码执行了登录操作的函数,直到第 1315 行,程序执行返回到 748 行"""
    
     """以下代码是监控买卖条件及执行交易的函数,程序开始进入交易阶段,从 1321 行直到第 2500 行"""  
     def First_trade(self):
         try:
+            self.trading = True  # 开始交易
             # 获取当前Yes和No价格
             prices = self.driver.execute_script("""
                 function getPrices() {
@@ -1449,11 +1477,13 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"First_trade执行失败: {str(e)}")
             self.update_status(f"First_trade执行失败: {str(e)}")
+        finally:
+            self.trading = False
 
     def Second_trade(self):
         """处理Yes2/No2的自动交易"""
         try:
-            
+            self.trading = True  # 开始交易
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             # 获取当前Yes和No价格
@@ -1574,12 +1604,13 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Second_trade执行失败: {str(e)}")
             self.update_status(f"Second_trade执行失败: {str(e)}")
-        
+        finally:
+            self.trading = False
     def Third_trade(self):
         """处理Yes3/No3的自动交易"""
         try:
+            self.trading = True  # 开始交易
             
-       
             if not self.driver:
                 raise Exception("浏览器连接丢失")  
             # 获取当前Yes和No价格
@@ -1699,11 +1730,12 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Third_trade执行失败: {str(e)}")
             self.update_status(f"Third_trade执行失败: {str(e)}")
-        
+        finally:
+            self.trading = False
     def Forth_trade(self):
         """处理Yes4/No4的自动交易"""
         try:
-           
+            self.trading = True  # 开始交易
             
             if not self.driver:
                 raise Exception("浏览器连接丢失")
@@ -1831,12 +1863,13 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Forth_trade执行失败: {str(e)}")
             self.update_status(f"Forth_trade执行失败: {str(e)}")
-        
+        finally:
+            self.trading = False
 
     def Sell_yes(self):
         """当YES4价格等于实时Yes价格时自动卖出"""
         try:
-           
+            
             if not self.driver:
                 raise Exception("浏览器连接丢失")
                 
