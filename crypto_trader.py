@@ -1317,8 +1317,8 @@ class CryptoTrader:
         try:
             if self.running:
                 if not self.trading:  # 仅在非交易状态执行刷新
-                    self.logger.info("执行定时刷新")
                     self.driver.refresh()
+                    self.logger.info("定时刷新成功")
                 else:
                     self.logger.info("交易进行中，跳过本次刷新")
                 
