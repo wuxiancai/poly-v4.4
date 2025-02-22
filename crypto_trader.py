@@ -84,7 +84,7 @@ class CryptoTrader:
         # 添加交易次数计数器
         self.trade_count = 0
         self.sell_count = 0  # 添加卖出计数器
-        self.refresh_interval = 600000  # 10分钟 = 600000毫秒
+        self.refresh_interval = 60000  # 10分钟 = 600000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
         self.default_target_price = 0.54
         self._amounts_logged = False
@@ -125,15 +125,85 @@ class CryptoTrader:
         # 添加登录状态监控定时器
         self.login_check_timer = None
 
-    def run(self):
-        """启动程序"""
+    def find_weekly_url(self, coin):
+        """在Polymarket搜索指定币种的周合约地址"""
         try:
-            self.logger.info("启动主程序...")
-            self.root.mainloop()
-        except Exception as e:
-            self.logger.error(f"程序运行出错: {str(e)}")
-            raise
+            base_url = "https://polymarket.com/markets/crypto?_s=start_date%3Adesc"
+            self.driver.get(base_url)
+            
+            # 等待页面加载完成
+            WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
+            time.sleep(3)  # 等待页面渲染完成
+            
+            # 设置搜索关键词
+            link_text_map = {
+                'BTC': 'Bitcoin above',
+                'ETH': 'Ethereum above',
+                'SOLANA': 'Solana above',
+                'XRP': 'Ripple above'
+            }
+            search_text = link_text_map.get(coin, '')
+            
+            if not search_text:
+                self.logger.error(f"无效的币种: {coin}")
+                return
+                
+            try:
+                # 使用确定的XPath查找搜索框
+                search_box = self.driver.find_element(By.XPATH, XPathConfig.SEARCH_INPUT)
+                self.logger.debug(f"找到搜索框，开始输入搜索词: {search_text}")
+                
+                # 创建ActionChains对象
+                actions = ActionChains(self.driver)
+                
+                # 清除搜索框并输入搜索词
+                search_box.clear()
+                search_box.send_keys(search_text)
+                time.sleep(1)  # 等待搜索词输入完成
+                
+                # 按ENTER键开始搜索
+                actions.send_keys(Keys.RETURN).perform()
+                time.sleep(1)  # 等待搜索结果加载
+                
+                # 按4次TAB键
+                for i in range(4):
+                    actions.send_keys(Keys.TAB).perform()
+                    time.sleep(0.3)  # 每次TAB之间等待1秒
+                
+                # 按ENTER键打开链接
+                actions.send_keys(Keys.RETURN).perform()
+                time.sleep(1)  # 等待新标签页打开
+                
+                # 切换到新标签页获取完整URL
+                self.driver.switch_to.window(self.driver.window_handles[-1])
+                WebDriverWait(self.driver, 10).until(EC.url_contains('/event/'))
+                final_url = self.driver.current_url
+                
+                # 关闭新标签页并切换回原页面
+                self.driver.close()
+                self.driver.switch_to.window(self.driver.window_handles[0])
+                
+                # 更新配置
+                self.config['website']['url'] = final_url
+                self.save_config()
+                
+                # 更新GUI显示
+                self.url_entry.delete(0, tk.END)
+                self.url_entry.insert(0, final_url)
+                # 重启程序
+                self.restart_program()
+                self.logger.info(f"成功获取{coin}周合约地址: {final_url}")
+                
+            except NoSuchElementException as e:
+                self.logger.warning(f"未找到{coin}周合约链接: {str(e)}")
+                messagebox.showwarning("警告", f"未找到{coin}周合约")
 
+        except Exception as e:
+            self.logger.error(f"操作失败: {str(e)}")
+            messagebox.showerror("错误", f"流程执行异常: {str(e)}")
+            
     def load_config(self):
         """加载配置文件，保持默认格式"""
         try:
@@ -293,7 +363,6 @@ class CryptoTrader:
         scrollbar.pack(side="right", fill="y")
 
         """创建按钮和输入框样式"""
-
         style = ttk.Style()
         style.configure('Red.TButton', foreground='red', font=('TkDefaultFont', 14, 'bold'))
         style.configure('Black.TButton', foreground='black', font=('TkDefaultFont', 14, 'normal'))
@@ -371,7 +440,6 @@ class CryptoTrader:
 
         # 交易次数按钮放在trades_frame中
         ttk.Label(trades_frame, text="交易次数:", style='Black.TLabel').pack(side=tk.LEFT, padx=(2,2))
-
         buttons_frame = ttk.Frame(trades_frame)
         buttons_frame.pack(side=tk.LEFT, padx=(0,0))
 
@@ -380,13 +448,37 @@ class CryptoTrader:
         
         # 4按钮
         self.trade_buttons["4"] = ttk.Button(buttons_frame, text="4", width=3, style='Blue.TButton')
-        self.trade_buttons["4"].grid(row=1, column=5, padx=2, pady=3)
+        self.trade_buttons["4"].grid(row=1, column=1, padx=2, pady=3)
 
         # 添加程序重启按钮
         self.restart_button = ttk.Button(buttons_frame, text="重启程序", 
                                          command=self.restart_program, width=6,
                                          style='Blue.TButton')
-        self.restart_button.grid(row=1, column=8, padx=2, pady=3)
+        self.restart_button.grid(row=1, column=2, padx=2, pady=3)
+
+        # 添加搜索BTC周链接按钮
+        self.btc_button = ttk.Button(buttons_frame, text="BTC", 
+                                         command=lambda: self.find_weekly_url('BTC'), width=3,
+                                         style='Blue.TButton')
+        self.btc_button.grid(row=1, column=3, padx=2, pady=3)
+
+        # 添加搜索ETH周链接按钮
+        self.eth_button = ttk.Button(buttons_frame, text="ETH", 
+                                         command=lambda: self.find_weekly_url('ETH'), width=3,
+                                         style='Blue.TButton')
+        self.eth_button.grid(row=1, column=4, padx=2, pady=3)
+
+        # 添加搜索SOLANA周链接按钮
+        self.solana_button = ttk.Button(buttons_frame, text="SOLANA", 
+                                         command=lambda: self.find_weekly_url('SOLANA'), width=7,
+                                         style='Blue.TButton')
+        self.solana_button.grid(row=1, column=5, padx=2, pady=3)
+
+        # 添加搜索XRP周链接按钮
+        self.xrp_button = ttk.Button(buttons_frame, text="XRP", 
+                                         command=lambda: self.find_weekly_url('XRP'), width=3,
+                                         style='Blue.TButton')
+        self.xrp_button.grid(row=1, column=6, padx=2, pady=3)
 
         # 配置列权重使输入框均匀分布
         for i in range(8):
@@ -794,9 +886,7 @@ class CryptoTrader:
         self.start_url_monitoring()
         # 启动登录状态监控
         self.start_login_monitoring()
-        # 启动定时刷新
-        self.refresh_page()
-
+        
     """以下代码是:threading.Thread(target=self._start_browser_monitoring, 
     args=(self.target_url,), daemon=True).start()线程启动后执行的函数,直到 995 行"""
 
@@ -1037,12 +1127,11 @@ class CryptoTrader:
                     self.cash_initialized = True
                     self.root.after(1000, self.schedule_update_amount)  # 延迟1秒确保数据稳定
                 
-
                 # 新最后更新间
                 current_time = datetime.now().strftime('%H:%M:%S')
                 self.balance_update_label.config(text=f"最后更新: {current_time}")  
             except Exception as e:
-                self.logger.error(f"获取金信息失败: {str(e)}")
+                self.logger.error(f"获取资金信息失败: {str(e)}")
                 self.portfolio_label.config(text="Portfolio: 获取失败")
                 self.cash_label.config(text="Cash: 获取失败")
                 self.check_balance()
@@ -1083,6 +1172,8 @@ class CryptoTrader:
                 self.logger.info("金额设置成功,1秒后设置价格")
                 # 延迟1秒设置价格
                 self.root.after(2000, lambda: self.set_yes_no_default_target_price())
+                time.sleep(1)
+                self.refresh_page()
             else:
                 if current_retry < 15:  # 最多重试15次
                     self.logger.info("金额未成功设置,2000ms后重试")
@@ -1318,8 +1409,11 @@ class CryptoTrader:
         try:
             if self.running:
                 if not self.trading:  # 仅在非交易状态执行刷新
-                    self.driver.refresh()
-                    self.logger.info("定时刷新成功")
+                    if self.driver:
+                        self.driver.refresh()
+                        self.logger.info("定时刷新成功")
+                    else:
+                        self.logger.error("浏览器连接丢失")
                 else:
                     self.logger.info("交易进行中，跳过本次刷新")
                 
@@ -2752,7 +2846,7 @@ class CryptoTrader:
                     time.sleep(self.retry_interval)
                 else:
                     raise
-
+    
     def run(self):
         """启动程序"""
         try:
